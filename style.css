@@ -82,8 +82,13 @@ header a:hover {
   padding: clamp(70px, 11vw, 140px) 0 clamp(60px, 9vw, 110px)
 }
 
-.hero .gallery {
+.gwrap {
+  position: relative;
   margin-top: clamp(48px, 7vw, 90px)
+}
+
+.gnav {
+  display: none
 }
 
 .hero h1 {
@@ -138,11 +143,13 @@ header a:hover {
 .gtrack {
   display: flex;
   width: max-content;
-  animation: gscroll 60s linear infinite
+  padding: 0 clamp(20px, 4vw, 48px);
+  will-change: transform
 }
 
-.gallery:hover .gtrack {
-  animation-play-state: paused
+/* if GSAP can't load, let the row scroll by hand instead */
+.gallery.no-gsap {
+  overflow-x: auto
 }
 
 .tile {
@@ -157,15 +164,15 @@ header a:hover {
 }
 
 .tile.s0 {
-  aspect-ratio: 4/5
+  aspect-ratio: 8/5
 }
 
 .tile.s1 {
-  aspect-ratio: 1/1
+  aspect-ratio: 8/5
 }
 
 .tile.s2 {
-  aspect-ratio: 5/4
+  aspect-ratio: 8/5
 }
 
 .tile::before {
@@ -410,10 +417,25 @@ ul.tags {
   transform: none
 }
 
-.menu.open .panel a:nth-child(1) span { transition-delay: .04s }
-.menu.open .panel a:nth-child(2) span { transition-delay: .10s }
-.menu.open .panel a:nth-child(3) span { transition-delay: .16s }
-.menu.open .panel a:nth-child(4) span { transition-delay: .22s }
+.menu.open .panel a:nth-child(1) span {
+  transition-delay: .04s
+}
+
+.menu.open .panel a:nth-child(2) span {
+  transition-delay: .10s
+}
+
+.menu.open .panel a:nth-child(3) span {
+  transition-delay: .16s
+}
+
+.menu.open .panel a:nth-child(4) span {
+  transition-delay: .22s
+}
+
+.menu.open .panel a:nth-child(5) span {
+  transition-delay: .28s
+}
 
 .panel:hover a {
   opacity: .35
@@ -452,7 +474,11 @@ ul.tags {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel a span, .burger span { transition: none }
+
+  .panel a span,
+  .burger span {
+    transition: none
+  }
 }
 
 /* ========== BRANDS MARQUEE ========== */
@@ -467,7 +493,8 @@ ul.tags {
   padding-bottom: clamp(80px, 12vw, 150px)
 }
 
-.brands-title {
+.brands-title,
+.sec-title {
   margin: 0 0 clamp(32px, 5vw, 56px);
   font-weight: 600;
   font-size: clamp(30px, 4.4vw, 60px);
@@ -492,20 +519,28 @@ ul.tags {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-right: clamp(48px, 7vw, 96px);
-  color: var(--muted);
-  font-size: clamp(18px, 2vw, 24px);
-  font-weight: 500;
-  letter-spacing: -.02em;
+  gap: 14px;
+  color: var(--text);
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 600;
+  letter-spacing: -.035em;
   white-space: nowrap;
-  opacity: .6;
-  transition: opacity .3s, color .3s
+  opacity: .55;
+  transition: opacity .3s
+}
+
+.brand::after {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 clamp(28px, 4vw, 56px);
+  border-radius: 50%;
+  background: var(--red)
 }
 
 .brand:hover {
-  opacity: 1;
-  color: var(--text)
+  opacity: 1
 }
 
 .brand img {
@@ -517,6 +552,150 @@ ul.tags {
 @keyframes bscroll {
   to {
     transform: translateX(-50%)
+  }
+}
+
+/* ========== ABOUT FACTS + EXPERIENCE ========== */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 40px;
+  max-width: 860px;
+  margin: 56px 0 0
+}
+
+.facts dt {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 4px
+}
+
+.facts dd {
+  margin: 0;
+  font-size: clamp(16px, 1.5vw, 19px);
+  font-weight: 500;
+  letter-spacing: -.02em
+}
+
+.exp {
+  padding-bottom: clamp(100px, 14vw, 200px)
+}
+
+.exp ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line)
+}
+
+.exp li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px 40px;
+  align-items: center;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line)
+}
+
+.exp .co {
+  font-weight: 600;
+  font-size: clamp(22px, 2.4vw, 32px);
+  line-height: 1.1;
+  letter-spacing: -.03em
+}
+
+.exp .role,
+.exp .desc,
+.exp .when {
+  color: var(--muted);
+  font-size: 15px
+}
+
+.exp .role {
+  margin-top: 6px
+}
+
+.exp .desc {
+  margin: 0;
+  max-width: 46ch
+}
+
+.exp .when {
+  white-space: nowrap
+}
+
+@media (max-width: 760px) {
+  .facts {
+    grid-template-columns: 1fr
+  }
+
+  .exp li {
+    grid-template-columns: 1fr;
+    gap: 10px
+  }
+}
+
+/* ========== WHATSAPP FLOATING BUTTON ========== */
+.wa {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  height: 58px;
+  padding: 0 16px;
+  border-radius: 99px;
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(16px);
+  animation: waIn .7s 1.2s cubic-bezier(.2, .7, .2, 1) forwards;
+  transition: background .25s
+}
+
+.wa:hover {
+  background: var(--red-hover)
+}
+
+.wa svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  fill: currentColor
+}
+
+.wa span {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 500;
+  transition: max-width .45s cubic-bezier(.2, .7, .2, 1), margin .45s
+}
+
+.wa:hover span {
+  max-width: 200px;
+  margin-left: 10px
+}
+
+html.menu-open .wa {
+  visibility: hidden
+}
+
+@keyframes waIn {
+  to {
+    opacity: 1;
+    transform: none
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa {
+    animation: none;
+    opacity: 1;
+    transform: none
   }
 }
 
@@ -576,31 +755,33 @@ ul.tags {
 .socials {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 14px;
   margin-top: 40px
 }
 
 .socials a {
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #0e0e0e;
+  border: 1px solid #1f1f1f;
   display: grid;
   place-items: center;
-  color: var(--muted);
-  transition: color .25s, border-color .25s, background .25s, transform .25s
+  color: #e4e4e4;
+  transition: border-color .25s, background .25s, transform .25s
 }
 
 .socials a:hover {
-  color: var(--text);
   border-color: var(--red);
-  background: rgba(179, 38, 45, .15);
-  transform: translateY(-3px)
+  background: #150f0f;
+  transform: translateY(-4px)
 }
 
 .socials svg {
-  width: 20px;
-  height: 20px
+  width: 26px;
+  height: 26px;
+  fill: currentColor
 }
 
 /* ========== FOOTER ========== */
@@ -628,7 +809,8 @@ footer .meta {
 }
 
 .track {
-  display: inline-flex;
+  display: flex;
+  width: max-content;
   animation: scroll 28s linear infinite
 }
 
@@ -637,24 +819,68 @@ footer .meta {
   font-size: clamp(90px, 19vw, 300px);
   line-height: 1;
   letter-spacing: -.04em;
-  color: #cfcfcf;
+  color: transparent;
+  -webkit-text-stroke: 1.5px #bdbdbd;
   padding-right: .5em;
   padding-bottom: .08em
 }
 
-/* Shadow that follows the cursor over the name (multiply: tints the letters, leaves the black untouched) */
-.shadow {
+/* Real-glass fill, revealed around the cursor: clear body, bright edges, RGB dispersion fringes */
+.fill {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
   opacity: 0;
-  transition: opacity .4s;
-  mix-blend-mode: multiply;
-  background: radial-gradient(circle 190px at var(--mx, 50%) var(--my, 50%), rgba(179, 38, 45, 1) 0%, rgba(179, 38, 45, .55) 45%, rgba(179, 38, 45, 0) 100%)
+  transition: opacity .45s;
+  -webkit-mask-image: radial-gradient(circle clamp(160px, 18vw, 260px) at var(--mx, 0px) var(--my, 0px), #000 0%, rgba(0, 0, 0, .7) 55%, transparent 100%);
+  mask-image: radial-gradient(circle clamp(160px, 18vw, 260px) at var(--mx, 0px) var(--my, 0px), #000 0%, rgba(0, 0, 0, .7) 55%, transparent 100%);
+  filter: drop-shadow(0 0 22px rgba(200, 0, 10, .55))
 }
 
-.marquee:hover .shadow {
+.marquee:hover .fill {
   opacity: 1
+}
+
+.fill .track {
+  position: absolute;
+  left: 0;
+  top: 0
+}
+
+.fill .track span {
+  color: transparent;
+  -webkit-text-stroke: 1.5px
+}
+
+/* three colour-split outlines = chromatic dispersion; they drift apart as the cursor moves across */
+.tr-r,
+.tr-g,
+.tr-b {
+  mix-blend-mode: screen
+}
+
+.tr-r span {
+  -webkit-text-stroke-color: rgba(255, 55, 65, .95);
+  transform: translate(calc(var(--dx, 0px) * -1 - 2.5px), -1px)
+}
+
+.tr-g span {
+  -webkit-text-stroke-color: rgba(255, 140, 80, .8);
+  transform: translate(0, 1.5px)
+}
+
+.tr-b span {
+  -webkit-text-stroke-color: rgba(210, 30, 120, .9);
+  transform: translate(calc(var(--dx, 0px) + 2.5px), -1px)
+}
+
+/* red glass body: bright rim, deeper red through the middle, reflections top and bottom */
+.tr-body span {
+  -webkit-text-stroke: 1.2px rgba(255, 150, 145, .95);
+  background: linear-gradient(170deg, rgba(255, 90, 90, .8) 0%, rgba(215, 15, 25, .42) 22%, rgba(186, 0, 1, .3) 50%, rgba(225, 25, 35, .45) 78%, rgba(255, 105, 100, .75) 100%);
+  -webkit-background-clip: text;
+  background-clip: text
 }
 
 @keyframes scroll {
@@ -685,7 +911,6 @@ footer .meta {
 @media(prefers-reduced-motion:reduce) {
 
   .track,
-  .gtrack,
   .btrack {
     animation: none
   }
@@ -698,5 +923,78 @@ footer .meta {
 
   html {
     scroll-behavior: auto
+  }
+}
+
+/* ========== GALLERY ON PHONES: manual carousel with side arrows (no scroll hijack) ========== */
+@media (max-width: 760px) {
+  .gallery {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-mask-image: none;
+    mask-image: none
+  }
+
+  .gallery::-webkit-scrollbar {
+    display: none
+  }
+
+  .gtrack {
+    padding: 0 14vw
+  }
+
+  .tile {
+    width: 72vw;
+    height: auto;
+    scroll-snap-align: center
+  }
+
+  .tile.s0,
+  .tile.s1,
+  .tile.s2 {
+    aspect-ratio: 8 / 5
+  }
+
+  .gnav {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    pointer-events: none
+  }
+
+  .gnav button {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(10, 10, 10, .72);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: var(--text);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: opacity .25s, border-color .25s
+  }
+
+  .gnav button:active {
+    border-color: var(--red)
+  }
+
+  .gnav button:disabled {
+    opacity: .25
+  }
+
+  .gnav svg {
+    width: 22px;
+    height: 22px
   }
 }

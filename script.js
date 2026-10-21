@@ -1,13 +1,18 @@
 /* ===== EDIT ME: showcase images (local paths or full URLs, e.g. Unsplash links) ===== */
 const GALLERY = [
-  "images/work-1.jpg", "images/work-2.jpg", "images/work-3.jpg", "images/work-4.jpg",
-  "images/work-5.jpg", "images/work-6.jpg", "images/work-7.jpg", "images/work-8.jpg"
+  "images/ACQAD.jpg.jpeg",
+  "images/AFFORDAVLE TYRES.jpg.jpeg",
+  "images/ANSRD LABS 2.jpg.jpeg",
+  "images/ANSRD LABS.jpg.jpeg",
+  "images/FLEXIPAY.jpg.jpeg",
+  "images/GRACE ABDUL.jpg.jpeg",
+  "images/HAVES AGROFOOD.jpg.jpeg",
+  "images/SHI.jpg.jpeg"
 ];
 (function () {
   const g = document.getElementById('gtrack');
-  for (let r = 0; r < 2; r++) GALLERY.forEach((src, i) => {
+  GALLERY.forEach((src, i) => {
     const t = document.createElement('div'); t.className = 'tile s' + (i % 3);
-    if (r) t.setAttribute('aria-hidden', 'true');
     t.innerHTML = '<img src="' + src + '" alt="" loading="lazy">';
     t.querySelector('img').onerror = function () { this.remove() };
     g.append(t);
@@ -38,6 +43,7 @@ while (track.scrollWidth < window.innerWidth * 2 && guard++ < 6) {
   track.append(first.cloneNode(true));
 }
 if (track.children.length % 2) track.append(first.cloneNode(true));
+document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.innerHTML); /* glass copies stay in sync */
 
 /* Figma-style cursor: wanders over the photo, follows the mouse on hover */
 (function () {
@@ -58,37 +64,12 @@ if (track.children.length % 2) track.append(first.cloneNode(true));
 
 /* Footer name: shadow follows the cursor (name keeps scrolling) */
 (function () {
-  const m = document.querySelector('.marquee'), sh = document.getElementById('shadow');
+  const m = document.querySelector('.marquee'), sh = m;
   if (!m || !sh) return;
   let x = 0, y = 0, tx = 0, ty = 0;
   m.addEventListener('pointerenter', e => { const b = m.getBoundingClientRect(); x = tx = e.clientX - b.left; y = ty = e.clientY - b.top; });
   m.addEventListener('pointermove', e => { const b = m.getBoundingClientRect(); tx = e.clientX - b.left; ty = e.clientY - b.top; });
-  (function loop() { x += (tx - x) * .15; y += (ty - y) * .15; sh.style.setProperty('--mx', x + 'px'); sh.style.setProperty('--my', y + 'px'); requestAnimationFrame(loop); })();
-})();
-
-/* ===== EDIT ME: brands you've worked with =====
-   slug = icon name from simpleicons.org (loaded from their free CDN)
-   logo = path to your own file instead (use a light/white logo, e.g. "images/brands/client.svg") */
-const BRANDS = [
-  { name: "Spotify", slug: "spotify" },
-  { name: "Airbnb", slug: "airbnb" },
-  { name: "Notion", slug: "notion" },
-  { name: "Shopify", slug: "shopify" },
-  { name: "Stripe", slug: "stripe" },
-  { name: "Dropbox", slug: "dropbox" },
-  { name: "Figma", slug: "figma" },
-  { name: "GitHub", slug: "github" }
-];
-(function () {
-  const t = document.getElementById('btrack'); if (!t) return;
-  for (let r = 0; r < 4; r++) BRANDS.forEach(b => {
-    const d = document.createElement('div'); d.className = 'brand'; if (r) d.setAttribute('aria-hidden', 'true');
-    const src = b.logo || ('https://cdn.simpleicons.org/' + b.slug + '/f2f2f2');
-    d.innerHTML = '<img src="' + src + '" alt="" loading="lazy"><span></span>';
-    d.querySelector('span').textContent = b.name;
-    d.querySelector('img').onerror = function () { this.remove() };
-    t.append(d);
-  });
+  (function loop() { x += (tx - x) * .15; y += (ty - y) * .15; sh.style.setProperty('--mx', x + 'px'); sh.style.setProperty('--my', y + 'px'); sh.style.setProperty('--dx', ((x / (m.clientWidth || 1)) - .5) * 8 + 'px'); requestAnimationFrame(loop); })();
 })();
 
 /* Hamburger menu: opens on hover (desktop mouse), tap/click or keyboard (everywhere); closes on Esc, outside click or link click */
@@ -103,4 +84,41 @@ const BRANDS = [
   m.querySelectorAll('a').forEach(a => a.addEventListener('click', () => set(false)));
   document.addEventListener('click', e => { if (!m.contains(e.target)) set(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
+})();
+
+/* Gallery
+   Desktop: pinned horizontal scroll. The page holds here while the cards slide past; it moves on once the last card has been seen.
+   Phones: no pinning. A normal swipeable row with arrow buttons at the sides. */
+(function () {
+  const gal = document.querySelector('.gallery'), track = document.getElementById('gtrack');
+  if (!gal || !track) return;
+
+  /* side arrows (visible on phones only, via CSS) */
+  const prev = document.querySelector('.gprev'), next = document.querySelector('.gnext');
+  if (prev && next) {
+    const step = () => { const t = gal.querySelector('.tile'); return t ? t.getBoundingClientRect().width + 16 : gal.clientWidth * .8; };
+    const update = () => { prev.disabled = gal.scrollLeft <= 4; next.disabled = gal.scrollLeft >= gal.scrollWidth - gal.clientWidth - 4; };
+    prev.addEventListener('click', () => gal.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next.addEventListener('click', () => gal.scrollBy({ left: step(), behavior: 'smooth' }));
+    gal.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  if (!window.gsap || !window.ScrollTrigger) { gal.classList.add('no-gsap'); return; }
+  gsap.registerPlugin(ScrollTrigger);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { gal.classList.add('no-gsap'); return; }
+  const dist = () => Math.max(0, track.scrollWidth - document.documentElement.clientWidth);
+  gsap.matchMedia().add('(min-width: 761px)', () => {
+    gsap.to(track, {
+      x: () => -dist(),
+      ease: 'none',
+      scrollTrigger: { trigger: gal, start: 'center center', end: () => '+=' + dist(), pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true }
+    });
+    gsap.from('.tile', {
+      y: 60, opacity: 0, duration: 1, stagger: .08, ease: 'power3.out',
+      scrollTrigger: { trigger: gal, start: 'top 85%', once: true }
+    });
+  });
+  addEventListener('load', () => ScrollTrigger.refresh());
 })();
