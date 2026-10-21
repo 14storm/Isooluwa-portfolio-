@@ -636,6 +636,68 @@ ul.tags {
 }
 
 /* ========== WHATSAPP FLOATING BUTTON ========== */
+.cal {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 94px);
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(16px);
+  animation: waIn .7s 1.35s cubic-bezier(.2, .7, .2, 1) forwards;
+  transition: background .25s
+}
+
+.cal:hover {
+  background: var(--red-hover)
+}
+
+.cal svg {
+  width: 26px;
+  height: 26px
+}
+
+.cal-label {
+  position: absolute;
+  right: calc(100% + 12px);
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  animation: bookCallTag 8s 3s infinite
+}
+
+@keyframes bookCallTag {
+  0%, 4% {
+    opacity: 0;
+    transform: translateX(8px) scale(.96)
+  }
+
+  9%, 25% {
+    opacity: 1;
+    transform: translateX(0) scale(1)
+  }
+
+  30%, 100% {
+    opacity: 0;
+    transform: translateX(8px) scale(.96)
+  }
+}
+
 .wa {
   position: fixed;
   right: max(20px, env(safe-area-inset-right, 0px));
@@ -680,10 +742,6 @@ ul.tags {
   margin-left: 10px
 }
 
-html.menu-open .wa {
-  visibility: hidden
-}
-
 @keyframes waIn {
   to {
     opacity: 1;
@@ -692,7 +750,14 @@ html.menu-open .wa {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wa {
+  .wa,
+  .cal {
+    animation: none;
+    opacity: 1;
+    transform: none
+  }
+
+  .cal-label {
     animation: none;
     opacity: 1;
     transform: none
