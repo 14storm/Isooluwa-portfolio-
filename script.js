@@ -15,7 +15,7 @@ const GALLERY = [
 ];
 
 /* ===== EDIT ME: brands and their designs =====
-   Clicking a matching row in Experience opens that brand's page.
+   Brand artwork can be opened from a direct brand URL.
    images = all design files for that brand, in the order they appear (files that don't exist yet are hidden).
    covers = optional: slider images that should open this brand but aren't repeated on its page. logo = shows in the brands carousel. */
 const BRANDS = [
@@ -36,6 +36,73 @@ const BRANDS = [
   { brand: "Saint Hive International", info: "Logo design", images: ["images/SHI.jpg.jpeg"], logo: "images/BRANDS LOGO/SAINT HIVE.png" },
   { brand: "Dattego", info: "Brand design", images: [], logo: "images/BRANDS LOGO/DATTEGO.png" },
   { brand: "Seed of Mercy Foundation", info: "Brand design", images: [], logo: "images/BRANDS LOGO/SEED OF MERCY FOUNDATION.png" }
+];
+
+const PROJECTS = [
+  {
+    slug: "affordable-tyres",
+    title: "Affordable Tyres",
+    category: "Social media campaign",
+    cover: "images/AFFORDAVLE TYRES.jpg.jpeg",
+    overview: "A social campaign series for Affordable Tyres, built to make tyre education and promotions easy to scan.",
+    approach: "The designs pair bold display type, high-contrast yellow, black and red, and tyre imagery with concise messages and clear next steps.",
+    images: [
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/Artboard 16.png",
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/RUN FLAT.jpg",
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/sept.jpg",
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/TYRES 1.jpg"
+    ],
+    more: "https://www.behance.net/gallery/253558499/Social-Media-Designs-For-Affordable-Tyres"
+  },
+  {
+    slug: "saint-hive-international",
+    title: "Saint Hive International",
+    category: "Identity design",
+    cover: "images/SHI.jpg.jpeg",
+    overview: "Selected identity artwork for Saint Hive International.",
+    approach: "The supplied design pairs the organisation’s name with a community-focused symbol in a restrained monochrome treatment.",
+    images: ["images/SHI.jpg.jpeg"]
+  },
+  {
+    slug: "ansrd-labs",
+    title: "ANSRd Labs",
+    category: "Brand identity case study",
+    cover: "images/ANSRd Labs/Artboard 1.jpg",
+    overview: "Selected frames from ANSRd Labs’ supplied brand case-study presentation.",
+    approach: "The presentation moves from the brand introduction into typography and visual applications, using a focused amber, black and white palette.",
+    images: [
+      "images/ANSRd Labs/Artboard 1.jpg",
+      "images/ANSRd Labs/Artboard 11.jpg",
+      "images/ANSRd Labs/Artboard 17.jpg",
+      "images/ANSRd Labs/Artboard 21.jpg"
+    ],
+    more: "https://www.behance.net/gallery/239895105/BRAND-IDENTITY-DESIGN-FOR-ANSRD-LABS"
+  },
+  {
+    slug: "linkedin-optimization",
+    title: "LinkedIn Optimization",
+    category: "LinkedIn campaign",
+    cover: "images/ANSRd Labs/LINKEDIN OPTIMISATION.png",
+    overview: "Campaign visuals focused on LinkedIn profile optimization and professional visibility.",
+    approach: "The supplied graphics combine LinkedIn cues, portrait-led imagery and direct messaging to make the service clear at a glance.",
+    images: [
+      "images/ANSRd Labs/Layer 13.png",
+      "images/ANSRd Labs/LINKEDIN OPTIMISATION.png"
+    ],
+    more: "https://www.behance.net/gallery/253558855/Linkedin-Branding-Designs"
+  },
+  {
+    slug: "grace-abdul",
+    title: "Grace Abdul",
+    category: "Event and personal branding",
+    cover: "images/GRACE-20261022T200913Z-1-001/GRACE/A5.jpg",
+    overview: "Selected designs created for Grace Abdul around The Mint Experience and its LinkedIn visibility event.",
+    approach: "The layouts foreground the host and speakers while keeping the event theme and presenter details easy to follow.",
+    images: [
+      "images/GRACE-20261022T200913Z-1-001/GRACE/A5.jpg",
+      "images/GRACE-20261022T200913Z-1-001/GRACE/SM 2.jpg"
+    ]
+  }
 ];
 /* page address for each brand, e.g. brands/flexipay */
 BRANDS.forEach(b => { b.slug = b.brand.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
@@ -117,7 +184,29 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   const m = document.getElementById('menu'); if (!m) return;
   const b = m.querySelector('.burger');
   const hoverMode = matchMedia('(hover: hover) and (min-width: 761px)');
-  const set = o => { m.classList.toggle('open', o); b.setAttribute('aria-expanded', o); document.documentElement.classList.toggle('menu-open', o); };
+  const set = o => {
+    m.classList.toggle('open', o);
+    b.setAttribute('aria-expanded', o);
+    document.documentElement.classList.toggle('menu-open', o);
+    if (o && scrollY > 120) {
+      m.classList.add('scroll-header');
+      m.classList.remove('scroll-hidden');
+    }
+  };
+  let lastScrollY = scrollY;
+  addEventListener('scroll', () => {
+    const currentY = scrollY;
+    const pastHero = currentY > 120;
+    m.classList.toggle('scroll-header', pastHero);
+    if (!pastHero) {
+      m.classList.remove('scroll-hidden');
+    } else if (m.classList.contains('open') || currentY < lastScrollY - 4) {
+      m.classList.remove('scroll-hidden');
+    } else if (currentY > lastScrollY + 4) {
+      m.classList.add('scroll-hidden');
+    }
+    lastScrollY = currentY;
+  }, { passive: true });
   m.addEventListener('pointerenter', e => { if (hoverMode.matches && e.pointerType === 'mouse') set(true); });
   m.addEventListener('pointerleave', e => { if (hoverMode.matches && e.pointerType === 'mouse') set(false); });
   b.addEventListener('click', e => { e.stopPropagation(); if (hoverMode.matches && e.detail > 0) return; set(!m.classList.contains('open')); });
@@ -126,12 +215,62 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
 })();
 
-/* Brand view: thumbnails of every design for a brand, each opens large in a viewer with next / previous */
+/* Client project cards */
+(function () {
+  const grid = document.getElementById('project-grid');
+  if (!grid) return;
+  PROJECTS.forEach(project => {
+    const card = document.createElement('a');
+    card.className = 'project-card';
+    card.href = 'projects/' + project.slug;
+    card.setAttribute('aria-label', project.title + ': open project case study');
+
+    const imageWrap = document.createElement('span');
+    imageWrap.className = 'project-card-image';
+    const image = new Image();
+    image.alt = '';
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.onerror = () => {
+      console.warn('Project cover not found (404). The browser looked for:', abs(project.cover));
+      imageWrap.remove();
+    };
+    image.src = abs(project.cover);
+    imageWrap.append(image);
+
+    const copy = document.createElement('span');
+    copy.className = 'project-card-copy';
+    const text = document.createElement('span');
+    const title = document.createElement('span');
+    title.className = 'project-card-title';
+    title.textContent = project.title;
+    const category = document.createElement('span');
+    category.className = 'project-card-category';
+    category.textContent = project.category;
+    text.append(title, category);
+
+    const arrow = document.createElement('span');
+    arrow.className = 'project-card-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = '↗';
+    copy.append(text, arrow);
+    card.append(imageWrap, copy);
+    card.addEventListener('click', event => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+      event.preventDefault();
+      window.openProject(project.slug);
+    });
+    grid.append(card);
+  });
+})();
+
+/* Brand and client project viewers */
 (function () {
   const wv = document.getElementById('wv'), grid = document.getElementById('wv-grid');
   const lb = document.getElementById('lb');
   if (!wv || !grid || !lb) return;
   const title = document.getElementById('wv-title'), info = document.getElementById('wv-info');
+  const story = document.getElementById('wv-story'), cta = document.getElementById('wv-cta');
   const lbImg = lb.querySelector('img'), root = document.documentElement;
   let opener = null, set = [], idx = 0;
 
@@ -147,31 +286,54 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true'); root.classList.remove('lb-open');
   };
   const siteTitle = document.title;
-  const slugFromPath = () => { const m = location.pathname.match(/\/brands\/([^\/]+)\/?$/); return m ? decodeURIComponent(m[1]) : null; };
+  const routeFromPath = () => {
+    const match = location.pathname.match(/\/(brands|projects)\/([^/]+)\/?$/);
+    return match ? { type: match[1], slug: decodeURIComponent(match[2]) } : null;
+  };
   const hideWV = () => {
     wv.classList.remove('open'); wv.setAttribute('aria-hidden', 'true'); root.classList.remove('wv-open');
     document.title = siteTitle;
-    if (opener) opener.focus({ preventScroll: true });
+    if (opener && opener.isConnected) opener.focus({ preventScroll: true });
   };
   /* closing = going back one step in history, so the address and the back button stay in sync */
   const closeWV = () => {
     if (history.state && history.state.wv) { history.back(); return; }
     hideWV();
-    if (slugFromPath()) { try { history.replaceState({}, '', './'); } catch (e) { } }
+    if (routeFromPath()) {
+      try { history.replaceState({}, '', './'); }
+      catch (e) { console.warn('Could not restore the page URL after closing the project.', e); }
+    }
   };
 
-  window.openWork = (key, push = true) => {
-    const k = String(key).toLowerCase();
-    const b = BRANDS.find(x => x.brand.toLowerCase() === k) || BRANDS.find(x => x.images.includes(key) || (x.covers || []).includes(key));
-    if (!b) return false;
+  const openViewer = ({ slug, titleText, infoText, overview, approach, images, more, route }, push) => {
     opener = document.activeElement;
-    title.textContent = b.brand; info.textContent = b.info || '';
+    title.textContent = titleText;
+    info.textContent = infoText || '';
+    story.replaceChildren();
+    story.hidden = !overview && !approach;
+    if (overview || approach) {
+      const heading = document.createElement('h3');
+      heading.textContent = 'Project overview';
+      story.append(heading);
+      if (overview) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = overview;
+        story.append(paragraph);
+      }
+      if (approach) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = approach;
+        story.append(paragraph);
+      }
+    }
+    cta.hidden = !more;
+    if (more) cta.href = more;
     grid.innerHTML = '';
-    b.images.forEach((src, i) => {
+    images.forEach((src, i) => {
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wv-thumb'; btn.hidden = true;
-      btn.setAttribute('aria-label', 'View ' + b.brand + ' design ' + (i + 1));
+      btn.setAttribute('aria-label', 'View ' + titleText + ' design ' + (i + 1));
       btn.style.animationDelay = (i * 70) + 'ms';
-      const img = new Image(); img.alt = b.brand + ' design'; img.decoding = 'async';
+      const img = new Image(); img.alt = titleText + ' design'; img.decoding = 'async'; img.loading = 'lazy';
       img.onload = () => { btn.hidden = false; };
       img.onerror = () => { console.warn('Design not found (404). The browser looked for:', abs(src)); btn.remove(); };
       img.src = abs(src);
@@ -179,13 +341,49 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
       btn.addEventListener('click', () => openLB([...grid.querySelectorAll('.wv-thumb')], btn));
       grid.append(btn);
     });
-    if (!b.images.length) { const p = document.createElement('p'); p.className = 'wv-empty'; p.textContent = 'Designs for this brand are coming soon.'; grid.append(p); }
+    if (!images.length) {
+      const empty = document.createElement('p');
+      empty.className = 'wv-empty';
+      empty.textContent = 'Designs for this brand are coming soon.';
+      grid.append(empty);
+    }
     wv.scrollTop = 0;
     wv.classList.add('open'); wv.setAttribute('aria-hidden', 'false'); root.classList.add('wv-open');
     wv.querySelector('.wv-close').focus({ preventScroll: true });
-    document.title = b.brand + ' \u2014 ' + siteTitle;
-    if (push) { try { history.pushState({ wv: 1, slug: b.slug }, '', 'brands/' + b.slug); } catch (e) { } }
+    document.title = titleText + ' \u2014 ' + siteTitle;
+    if (push) {
+      try { history.pushState({ wv: 1, slug, route }, '', route + '/' + slug); }
+      catch (e) { console.warn('Could not update the project URL.', e); }
+    }
     return true;
+  };
+
+  window.openWork = (key, push = true) => {
+    const k = String(key).toLowerCase();
+    const brand = BRANDS.find(x => x.brand.toLowerCase() === k) || BRANDS.find(x => x.images.includes(key) || (x.covers || []).includes(key));
+    if (!brand) return false;
+    return openViewer({
+      slug: brand.slug,
+      titleText: brand.brand,
+      infoText: brand.info,
+      images: brand.images,
+      route: 'brands'
+    }, push);
+  };
+
+  window.openProject = (key, push = true) => {
+    const project = PROJECTS.find(item => item.slug === key);
+    if (!project) return false;
+    return openViewer({
+      slug: project.slug,
+      titleText: project.title,
+      infoText: project.category,
+      overview: project.overview,
+      approach: project.approach,
+      images: project.images,
+      more: project.more,
+      route: 'projects'
+    }, push);
   };
 
   wv.querySelector('.wv-close').addEventListener('click', closeWV);
@@ -201,25 +399,19 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     } else if (wv.classList.contains('open') && e.key === 'Escape') closeWV();
   });
 
-  /* routing: back / forward buttons and direct links like /brands/flexipay */
-  const openBySlug = s => { const b = BRANDS.find(x => x.slug === s); return b ? window.openWork(b.brand, false) : false; };
+  /* routing: back / forward buttons and direct links to brands or projects */
+  const openByRoute = route => {
+    if (!route) return false;
+    if (route.type === 'projects') return window.openProject(route.slug, false);
+    const brand = BRANDS.find(item => item.slug === route.slug);
+    return brand ? window.openWork(brand.brand, false) : false;
+  };
   addEventListener('popstate', () => {
     closeLB();
-    const s = slugFromPath();
-    if (s) openBySlug(s); else if (wv.classList.contains('open')) hideWV();
+    const route = routeFromPath();
+    if (route) openByRoute(route); else if (wv.classList.contains('open')) hideWV();
   });
-  openBySlug(slugFromPath());
-
-  /* Experience rows for brands that have designs become clickable too */
-  document.querySelectorAll('.exp .co').forEach(co => {
-    const name = co.textContent.trim().toLowerCase();
-    if (!BRANDS.some(b => b.brand.toLowerCase() === name)) return;
-    const li = co.closest('li'); li.classList.add('has-work');
-    li.tabIndex = 0; li.setAttribute('role', 'button'); li.setAttribute('aria-label', 'View ' + co.textContent.trim() + ' designs');
-    const go = () => window.openWork(co.textContent.trim());
-    li.addEventListener('click', go);
-    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-  });
+  openByRoute(routeFromPath());
 })();
 
 /* Brands I've worked with: monochrome logo carousel */

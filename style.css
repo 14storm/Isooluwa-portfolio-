@@ -379,6 +379,37 @@ ul.tags {
   z-index: 20
 }
 
+.menu.scroll-header {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  transition: transform .3s cubic-bezier(.2, .7, .2, 1), border-color .3s
+}
+
+.menu.scroll-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: inherit;
+  background: rgba(18, 18, 18, .72);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  transition: opacity .3s
+}
+
+.menu.scroll-header:not(.scroll-hidden)::before {
+  opacity: 1
+}
+
+.menu.scroll-header.scroll-hidden {
+  transform: translateY(calc(-100% - 24px))
+}
+
 .burger {
   position: relative;
   z-index: 3;
@@ -517,6 +548,8 @@ ul.tags {
 
 @media (prefers-reduced-motion: reduce) {
 
+  .menu.scroll-header,
+  .menu.scroll-header::before,
   .panel a span,
   .burger span {
     transition: none
@@ -545,7 +578,7 @@ ul.tags {
   color: var(--text)
 }
 
-/* ========== ABOUT FACTS + EXPERIENCE ========== */
+/* ========== ABOUT FACTS ========== */
 .facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -567,61 +600,96 @@ ul.tags {
   letter-spacing: -.02em
 }
 
-.exp {
-  padding-bottom: clamp(100px, 14vw, 200px)
-}
-
-.exp ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--line)
-}
-
-.exp li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px 40px;
-  align-items: center;
-  padding: 22px 0;
-  border-bottom: 1px solid var(--line)
-}
-
-.exp .co {
-  font-weight: 600;
-  font-size: clamp(22px, 2.4vw, 32px);
-  line-height: 1.1;
-  letter-spacing: -.03em
-}
-
-.exp .role,
-.exp .desc,
-.exp .when {
-  color: var(--muted);
-  font-size: 15px
-}
-
-.exp .role {
-  margin-top: 6px
-}
-
-.exp .desc {
-  margin: 0;
-  max-width: 46ch
-}
-
-.exp .when {
-  white-space: nowrap
-}
-
 @media (max-width: 760px) {
   .facts {
     grid-template-columns: 1fr
   }
+}
 
-  .exp li {
+/* ========== CLIENT PROJECTS ========== */
+.projects {
+  padding-bottom: clamp(100px, 14vw, 200px)
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 28px)
+}
+
+.project-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  color: var(--text)
+}
+
+.project-card-image {
+  display: block;
+  aspect-ratio: 1.45;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface)
+}
+
+.project-card-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .65s cubic-bezier(.2, .7, .2, 1), opacity .3s
+}
+
+.project-card:hover .project-card-image img,
+.project-card:focus-visible .project-card-image img {
+  transform: scale(1.035)
+}
+
+.project-card-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line)
+}
+
+.project-card-category {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px
+}
+
+.project-card-title {
+  margin: 0;
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 500;
+  letter-spacing: -.025em
+}
+
+.project-card-arrow {
+  flex: none;
+  color: var(--red);
+  font-size: 24px;
+  transition: transform .25s
+}
+
+.project-card:hover .project-card-arrow,
+.project-card:focus-visible .project-card-arrow {
+  transform: translate(3px, -3px)
+}
+
+.project-card:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 5px
+}
+
+@media (max-width: 600px) {
+  .project-grid {
     grid-template-columns: 1fr;
-    gap: 10px
+    gap: 12px
   }
 }
 
@@ -972,23 +1040,7 @@ footer .meta {
 
 }
 
-/* ========== BRAND VIEW (opens from the brands and experience sections) ========== */
-.exp li.has-work {
-  cursor: pointer
-}
-
-.exp li.has-work .co::after {
-  content: "\2197";
-  display: inline-block;
-  margin-left: 10px;
-  color: var(--red);
-  transition: transform .25s cubic-bezier(.2, .7, .2, 1)
-}
-
-.exp li.has-work:hover .co::after {
-  transform: translate(4px, -4px)
-}
-
+/* ========== PROJECT VIEWER ========== */
 .wv {
   position: fixed;
   inset: 0;
@@ -1023,24 +1075,51 @@ footer .meta {
 }
 
 .wv-info {
-  margin: 18px 0 clamp(32px, 5vw, 56px);
+  margin: 18px 0 24px;
   color: var(--muted);
   font-size: clamp(16px, 1.4vw, 19px)
 }
 
+.wv-story {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px clamp(24px, 5vw, 72px);
+  max-width: 950px;
+  margin-bottom: clamp(32px, 5vw, 56px)
+}
+
+.wv-story[hidden] {
+  display: none
+}
+
+.wv-story h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500
+}
+
+.wv-story p {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(15px, 1.25vw, 17px)
+}
+
 .wv-grid {
-  column-count: 3;
-  column-gap: 16px
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px
 }
 
 .wv-thumb {
   position: relative;
   display: block;
   width: 100%;
-  margin: 0 0 16px;
+  margin: 0;
   padding: 0;
   overflow: hidden;
-  break-inside: avoid;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -1065,6 +1144,33 @@ footer .meta {
 
 .wv-thumb:hover img {
   transform: scale(1.04)
+}
+
+.wv-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  padding: 14px 22px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--text);
+  font-size: 15px;
+  transition: border-color .25s, background .25s
+}
+
+.wv-cta[hidden] {
+  display: none
+}
+
+.wv-cta:hover {
+  border-color: var(--red);
+  background: var(--surface)
+}
+
+.wv-cta svg {
+  width: 17px;
+  height: 17px
 }
 
 .wv.open .wv-thumb {
@@ -1182,17 +1288,17 @@ html.lb-open {
 
 @media (max-width: 900px) {
   .wv-grid {
-    column-count: 2
+    grid-template-columns: repeat(2, minmax(0, 1fr))
   }
 }
 
 @media (max-width: 760px) {
-  .wv-grid {
-    column-gap: 10px
+  .wv-story {
+    grid-template-columns: 1fr
   }
 
-  .wv-thumb {
-    margin-bottom: 10px
+  .wv-story h3 {
+    grid-column: auto
   }
 }
 
@@ -1260,7 +1366,7 @@ html.lb-open {
 }
 
 .wv-empty {
-  column-span: all;
+  grid-column: 1 / -1;
   margin: 0;
   color: var(--muted)
 }

@@ -18,6 +18,7 @@
       (function () {
         var p = location.pathname,
           i = p.indexOf("/brands/");
+        if (i < 0) i = p.indexOf("/projects/");
         if (i > -1) document.write('<base href="' + p.slice(0, i + 1) + '">');
       })();
     </script>
@@ -48,7 +49,7 @@
             <a href="#showcase"><span>Work</span></a>
             <a href="#about"><span>About</span></a>
             <a href="#brands"><span>Brands</span></a>
-            <a href="#experience"><span>Experience</span></a>
+            <a href="#projects"><span>Client projects</span></a>
             <a href="#start"><span>Start a project</span></a>
           </div>
         </nav>
@@ -164,47 +165,9 @@
         </div>
       </section>
 
-      <section id="experience" class="exp wrap">
-        <h2 class="sec-title reveal">Experience</h2>
-        <ul class="reveal">
-          <li>
-            <div>
-              <div class="co">Affordable Tyres</div>
-              <div class="role">Brand Strategist · Remote</div>
-            </div>
-            <span class="when">Jul — Present</span>
-          </li>
-          <li>
-            <div>
-              <div class="co">EntrMac</div>
-              <div class="role">Brand Identity Designer · Remote</div>
-            </div>
-            <span class="when">Mar 2026</span>
-          </li>
-          <li>
-            <div>
-              <div class="co">Equipped For The Journey</div>
-              <div class="role">Graphic Designer · Remote</div>
-            </div>
-            <span class="when">Feb 2026</span>
-          </li>
-          <li>
-            <div>
-              <div class="co">ANSRd Labs</div>
-              <div class="role">Brand Identity Designer · Contract, USA</div>
-            </div>
-            <span class="when">Nov 2025</span>
-          </li>
-          <li>
-            <div>
-              <div class="co">VicFaus Integrated Solutions</div>
-              <div class="role">
-                Social Media Designer &amp; Content Manager · Remote
-              </div>
-            </div>
-            <span class="when">Feb — Oct 2025</span>
-          </li>
-        </ul>
+      <section id="projects" class="projects wrap">
+        <h2 class="sec-title reveal">Client projects</h2>
+        <div class="project-grid reveal" id="project-grid"></div>
       </section>
 
       <section class="cta" id="start">
@@ -327,7 +290,14 @@ https://www.instagram.com/brandot_26?rpxt=MWY5aDFrbzJ3ODd1MQ=="
       <div class="wv-inner">
         <h2 class="wv-title" id="wv-title"></h2>
         <p class="wv-info" id="wv-info"></p>
+        <div class="wv-story" id="wv-story"></div>
         <div class="wv-grid" id="wv-grid"></div>
+        <a class="wv-cta" id="wv-cta" target="_blank" rel="noopener noreferrer" hidden>
+          See More
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 17 17 7M7 7h10v10" />
+          </svg>
+        </a>
       </div>
     </div>
 
