@@ -1,0 +1,2 @@
+# Netlify: lets /brands/<name> load the site (and survive a refresh)
+/brands/*  /index.html  200

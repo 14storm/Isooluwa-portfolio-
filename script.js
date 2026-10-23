@@ -1,3 +1,7 @@
+/* Every image path below is resolved against the page's address at load time, so it still works after the address changes to /brands/<name> */
+const ROOT = document.baseURI;
+const abs = p => new URL(p, ROOT).href;
+
 /* ===== EDIT ME: showcase images (local paths or full URLs, e.g. Unsplash links) ===== */
 const GALLERY = [
   "images/ACQAD.jpg.jpeg",
@@ -9,12 +13,46 @@ const GALLERY = [
   "images/HAVES AGROFOOD.jpg.jpeg",
   "images/SHI.jpg.jpeg"
 ];
+
+/* ===== EDIT ME: brands and their designs =====
+   Clicking a card in the slider, a logo in "Brands I've worked with", or a matching row in Experience opens that brand's page.
+   images = all design files for that brand, in the order they appear (files that don't exist yet are hidden).
+   covers = optional: slider images that should open this brand but aren't repeated on its page. logo = shows in the brands section. */
+const BRANDS = [
+  { brand: "Affordable Tyres", info: "Social media campaign design", images: ["images/AFFORDAVLE TYRES.jpg.jpeg"], logo: "images/BRANDS LOGO/AFFORDABLE.png" },
+  { brand: "Acqad", info: "Logo and brand identity", images: ["images/ACQAD.jpg.jpeg"], logo: "images/BRANDS LOGO/ACQAD.png" },
+  { brand: "FlexiPay", info: "Social media campaign design", images: ["images/FLEXIPAY.jpg.jpeg"], logo: "images/BRANDS LOGO/FLEXIPAY.png" },
+  {
+    brand: "ANSRd Labs", info: "Brand identity, app icon and social content", covers: ["images/ANSRD LABS.jpg.jpeg", "images/ANSRD LABS 2.jpg.jpeg"],
+    images: [
+      "images/ANSRd Labs/ANSRD LABS.jpg",
+      ...Array.from({ length: 31 }, (_, i) => "images/ANSRd Labs/Artboard " + (i + 1) + ".jpg"),
+      "images/ANSRd Labs/Layer 13.png",
+      "images/ANSRd Labs/LINKEDIN OPTIMISATION.png"
+    ], logo: "images/BRANDS LOGO/ANSRD LABS .png"
+  },
+  { brand: "The Mint Circle", info: "Event and LinkedIn campaign flyers", images: ["images/GRACE ABDUL.jpg.jpeg"] },
+  { brand: "Haves Agrofood and Fisheries", info: "Logo design", images: ["images/HAVES AGROFOOD.jpg.jpeg"], logo: "images/BRANDS LOGO/HAVESAGRO FOOD.png" },
+  { brand: "Saint Hive International", info: "Logo design", images: ["images/SHI.jpg.jpeg"], logo: "images/BRANDS LOGO/SAINT HIVE.png" },
+  { brand: "Dattego", info: "Brand design", images: [], logo: "images/BRANDS LOGO/DATTEGO.png" },
+  { brand: "Seed of Mercy Foundation", info: "Brand design", images: [], logo: "images/BRANDS LOGO/SEED OF MERCY FOUNDATION.png" }
+];
+/* page address for each brand, e.g. brands/flexipay */
+BRANDS.forEach(b => { b.slug = b.brand.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
 (function () {
   const g = document.getElementById('gtrack');
   GALLERY.forEach((src, i) => {
     const t = document.createElement('div'); t.className = 'tile s' + (i % 3);
-    t.innerHTML = '<img src="' + src + '" alt="" loading="lazy">';
+    const b = BRANDS.find(x => x.images.includes(src) || (x.covers || []).includes(src));
+    t.innerHTML = '<img src="' + abs(src) + '" alt="' + (b ? b.brand + ' design' : '') + '" loading="lazy">';
     t.querySelector('img').onerror = function () { this.remove() };
+    if (b) {
+      t.classList.add('has-work'); t.dataset.label = 'View designs';
+      t.tabIndex = 0; t.setAttribute('role', 'button'); t.setAttribute('aria-label', 'View ' + b.brand + ' designs');
+      const go = () => window.openWork && window.openWork(src);
+      t.addEventListener('click', go);
+      t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    }
     g.append(t);
   });
 })();
@@ -121,4 +159,117 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     });
   });
   addEventListener('load', () => ScrollTrigger.refresh());
+})();
+/* Brand view: thumbnails of every design for a brand, each opens large in a viewer with next / previous */
+(function () {
+  const wv = document.getElementById('wv'), grid = document.getElementById('wv-grid');
+  const lb = document.getElementById('lb');
+  if (!wv || !grid || !lb) return;
+  const title = document.getElementById('wv-title'), info = document.getElementById('wv-info');
+  const lbImg = lb.querySelector('img'), root = document.documentElement;
+  let opener = null, set = [], idx = 0;
+
+  const showLB = i => { idx = (i + set.length) % set.length; lbImg.src = set[idx]; };
+  const openLB = (thumbs, btn) => {
+    set = thumbs.map(t => t.querySelector('img').src);
+    lb.classList.toggle('single', set.length < 2);
+    showLB(thumbs.indexOf(btn));
+    lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false'); root.classList.add('lb-open');
+    lb.querySelector('.lb-close').focus();
+  };
+  const closeLB = () => {
+    lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true'); root.classList.remove('lb-open');
+  };
+  const siteTitle = document.title;
+  const slugFromPath = () => { const m = location.pathname.match(/\/brands\/([^\/]+)\/?$/); return m ? decodeURIComponent(m[1]) : null; };
+  const hideWV = () => {
+    wv.classList.remove('open'); wv.setAttribute('aria-hidden', 'true'); root.classList.remove('wv-open');
+    document.title = siteTitle;
+    if (opener) opener.focus({ preventScroll: true });
+  };
+  /* closing = going back one step in history, so the address and the back button stay in sync */
+  const closeWV = () => {
+    if (history.state && history.state.wv) { history.back(); return; }
+    hideWV();
+    if (slugFromPath()) { try { history.replaceState({}, '', './'); } catch (e) { } }
+  };
+
+  window.openWork = (key, push = true) => {
+    const k = String(key).toLowerCase();
+    const b = BRANDS.find(x => x.brand.toLowerCase() === k) || BRANDS.find(x => x.images.includes(key) || (x.covers || []).includes(key));
+    if (!b) return false;
+    opener = document.activeElement;
+    title.textContent = b.brand; info.textContent = b.info || '';
+    grid.innerHTML = '';
+    b.images.forEach((src, i) => {
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wv-thumb'; btn.hidden = true;
+      btn.setAttribute('aria-label', 'View ' + b.brand + ' design ' + (i + 1));
+      btn.style.animationDelay = (i * 70) + 'ms';
+      const img = new Image(); img.alt = b.brand + ' design'; img.decoding = 'async';
+      img.onload = () => { btn.hidden = false; };
+      img.onerror = () => { console.warn('Design not found (404). The browser looked for:', abs(src)); btn.remove(); };
+      img.src = abs(src);
+      btn.append(img);
+      btn.addEventListener('click', () => openLB([...grid.querySelectorAll('.wv-thumb')], btn));
+      grid.append(btn);
+    });
+    if (!b.images.length) { const p = document.createElement('p'); p.className = 'wv-empty'; p.textContent = 'Designs for this brand are coming soon.'; grid.append(p); }
+    wv.scrollTop = 0;
+    wv.classList.add('open'); wv.setAttribute('aria-hidden', 'false'); root.classList.add('wv-open');
+    wv.querySelector('.wv-close').focus({ preventScroll: true });
+    document.title = b.brand + ' \u2014 ' + siteTitle;
+    if (push) { try { history.pushState({ wv: 1, slug: b.slug }, '', 'brands/' + b.slug); } catch (e) { } }
+    return true;
+  };
+
+  wv.querySelector('.wv-close').addEventListener('click', closeWV);
+  lb.querySelector('.lb-close').addEventListener('click', closeLB);
+  lb.querySelector('.lb-prev').addEventListener('click', () => showLB(idx - 1));
+  lb.querySelector('.lb-next').addEventListener('click', () => showLB(idx + 1));
+  lb.addEventListener('click', e => { if (e.target === lb) closeLB(); });
+  addEventListener('keydown', e => {
+    if (lb.classList.contains('open')) {
+      if (e.key === 'Escape') closeLB();
+      else if (e.key === 'ArrowLeft') showLB(idx - 1);
+      else if (e.key === 'ArrowRight') showLB(idx + 1);
+    } else if (wv.classList.contains('open') && e.key === 'Escape') closeWV();
+  });
+
+  /* routing: back / forward buttons and direct links like /brands/flexipay */
+  const openBySlug = s => { const b = BRANDS.find(x => x.slug === s); return b ? window.openWork(b.brand, false) : false; };
+  addEventListener('popstate', () => {
+    closeLB();
+    const s = slugFromPath();
+    if (s) openBySlug(s); else if (wv.classList.contains('open')) hideWV();
+  });
+  openBySlug(slugFromPath());
+
+  /* Experience rows for brands that have designs become clickable too */
+  document.querySelectorAll('.exp .co').forEach(co => {
+    const name = co.textContent.trim().toLowerCase();
+    if (!BRANDS.some(b => b.brand.toLowerCase() === name)) return;
+    const li = co.closest('li'); li.classList.add('has-work');
+    li.tabIndex = 0; li.setAttribute('role', 'button'); li.setAttribute('aria-label', 'View ' + co.textContent.trim() + ' designs');
+    const go = () => window.openWork(co.textContent.trim());
+    li.addEventListener('click', go);
+    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+})();
+
+/* Brands I've worked with: logos in their real colours. Each links to that brand's page (/brands/<name>) */
+(function () {
+  const g = document.getElementById('bgrid'); if (!g) return;
+  BRANDS.filter(b => b.logo).forEach(b => {
+    const a = document.createElement('a'); a.className = 'bcell' + (b.light ? ' light' : '');
+    a.href = 'brands/' + b.slug; a.setAttribute('aria-label', b.brand + ': view designs');
+    const img = new Image(); img.alt = b.brand; img.loading = 'lazy'; img.decoding = 'async';
+    img.onerror = () => { const s = document.createElement('span'); s.className = 'bname'; s.textContent = b.brand; img.replaceWith(s); };
+    img.src = abs(b.logo);
+    a.append(img);
+    a.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault(); window.openWork(b.brand);
+    });
+    g.append(a);
+  });
 })();
