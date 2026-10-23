@@ -227,6 +227,7 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   const g = document.getElementById('brand-track'); if (!g) return;
   BRANDS.filter(b => b.logo).forEach(b => {
     const item = document.createElement('div'); item.className = 'bcell';
+    if (b.slug === 'flexipay' || b.slug === 'ansrd-labs') item.classList.add('light-logo');
     const img = new Image(); img.alt = b.brand; img.loading = 'lazy'; img.decoding = 'async'; img.fetchPriority = 'low';
     img.onerror = () => { console.warn('Brand logo not found (404). The browser looked for:', abs(b.logo)); item.remove(); };
     img.src = abs(b.logo);

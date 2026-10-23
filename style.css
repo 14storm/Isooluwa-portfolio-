@@ -1237,6 +1237,22 @@ html.lb-open {
   filter: grayscale(1)
 }
 
+.bcell.light-logo img {
+  filter: grayscale(1) invert(1)
+}
+
+@media (max-width: 760px) {
+  .bcell {
+    width: clamp(112px, 30vw, 150px);
+    padding: 8px 12px
+  }
+
+  .bcell img {
+    max-width: clamp(56px, 16vw, 72px);
+    max-height: 56px
+  }
+}
+
 @keyframes bscroll {
   to {
     transform: translateX(-50%)
