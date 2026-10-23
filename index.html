@@ -109,34 +109,8 @@
           </div>
         </div>
         <div class="gwrap">
-          <div class="gallery" id="showcase" aria-label="Showcase">
+          <div class="gallery" id="showcase" role="region" aria-label="Selected design work">
             <div class="gtrack" id="gtrack"></div>
-          </div>
-          <div class="gnav">
-            <button class="gprev" type="button" aria-label="Previous design">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M15 5l-7 7 7 7" />
-              </svg>
-            </button>
-            <button class="gnext" type="button" aria-label="Next design">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
         </div>
       </section>
@@ -185,7 +159,9 @@
 
       <section id="brands" class="brands wrap">
         <h2 class="sec-title reveal">Brands I’ve worked with</h2>
-        <div class="bgrid reveal" id="bgrid"></div>
+        <div class="bmask" role="region" aria-label="Brands I’ve worked with">
+          <div class="btrack" id="brand-track"></div>
+        </div>
       </section>
 
       <section id="experience" class="exp wrap">
@@ -431,8 +407,6 @@ https://www.instagram.com/brandot_26?rpxt=MWY5aDFrbzJ3ODd1MQ=="
       ><span>Chat on WhatsApp</span></a
     >
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

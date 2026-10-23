@@ -87,10 +87,6 @@ header a:hover {
   margin-top: clamp(48px, 7vw, 90px)
 }
 
-.gnav {
-  display: none
-}
-
 .hero h1 {
   font-weight: 500;
   font-size: clamp(34px, 6vw, 84px);
@@ -172,23 +168,22 @@ header a:hover {
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)
 }
 
+.gallery:hover .gtrack {
+  animation-play-state: paused
+}
+
 .gtrack {
   display: flex;
   width: max-content;
-  padding: 0 clamp(20px, 4vw, 48px);
-  will-change: transform
-}
-
-/* if GSAP can't load, let the row scroll by hand instead */
-.gallery.no-gsap {
-  overflow-x: auto
+  gap: 16px;
+  will-change: transform;
+  animation: gscroll 45s linear infinite
 }
 
 .tile {
   position: relative;
   flex: none;
   height: clamp(240px, 34vw, 440px);
-  margin-right: 16px;
   border-radius: 6px;
   overflow: hidden;
   background: var(--surface);
@@ -550,58 +545,6 @@ ul.tags {
   color: var(--text)
 }
 
-.bmask {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)
-}
-
-.btrack {
-  display: flex;
-  align-items: center;
-  width: max-content;
-  animation: bscroll 45s linear infinite
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--text);
-  font-size: clamp(20px, 2.4vw, 30px);
-  font-weight: 600;
-  letter-spacing: -.035em;
-  white-space: nowrap;
-  opacity: .55;
-  transition: opacity .3s
-}
-
-.brand::after {
-  content: "";
-  flex: none;
-  width: 8px;
-  height: 8px;
-  margin: 0 clamp(28px, 4vw, 56px);
-  border-radius: 50%;
-  background: var(--red)
-}
-
-.brand:hover {
-  opacity: 1
-}
-
-.brand img {
-  display: block;
-  height: clamp(22px, 2.4vw, 30px);
-  width: auto
-}
-
-@keyframes bscroll {
-  to {
-    transform: translateX(-50%)
-  }
-}
-
 /* ========== ABOUT FACTS + EXPERIENCE ========== */
 .facts {
   display: grid;
@@ -731,7 +674,7 @@ ul.tags {
 }
 
 .wa:hover {
-  background:green;
+  background: green;
 }
 
 .cal:focus-visible,
@@ -991,8 +934,15 @@ footer .meta {
 @media(prefers-reduced-motion:reduce) {
 
   .track,
-  .btrack {
+  .btrack,
+  .gtrack {
     animation: none
+  }
+
+  .gallery {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none
   }
 
   .reveal {
@@ -1006,48 +956,12 @@ footer .meta {
   }
 }
 
-/* ========== GALLERY ON PHONES: manual carousel with side arrows (no scroll hijack) ========== */
+/* ========== GALLERY ON PHONES ========== */
 @media (max-width: 760px) {
-  .gallery-intro {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    margin: 0 20px 16px;
-    color: var(--muted);
-    font-size: 12px;
-    letter-spacing: .02em
-  }
-
-  .gallery-intro span:first-child {
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 500
-  }
-
-  .gallery {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 14vw;
-    scrollbar-width: none;
-    -webkit-mask-image: none;
-    mask-image: none
-  }
-
-  .gallery::-webkit-scrollbar {
-    display: none
-  }
-
-  .gtrack {
-    padding: 0 14vw
-  }
-
   .tile {
     width: 72vw;
     height: auto;
-    border-radius: 10px;
-    scroll-snap-align: center
+    border-radius: 10px
   }
 
   .tile.s0,
@@ -1056,84 +970,9 @@ footer .meta {
     aspect-ratio: 8 / 5
   }
 
-  .gnav {
-    position: relative;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 14px 20px 0;
-    pointer-events: none
-  }
-
-  .gnav button {
-    width: 46px;
-    height: 46px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, .18);
-    background: rgba(10, 10, 10, .72);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    color: var(--text);
-    cursor: pointer;
-    pointer-events: auto;
-    transition: opacity .25s, border-color .25s
-  }
-
-  .gnav button:active {
-    border-color: var(--red)
-  }
-
-  .gnav button:disabled {
-    opacity: .25
-  }
-
-  .gnav svg {
-    width: 22px;
-    height: 22px
-  }
 }
 
-/* ========== BRAND VIEW (opens when a card / experience row is clicked) ========== */
-.tile.has-work {
-  cursor: pointer
-}
-
-.tile.has-work::after {
-  content: attr(data-label);
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  z-index: 2;
-  padding: 7px 14px;
-  border-radius: 99px;
-  background: rgba(10, 10, 10, .72);
-  border: 1px solid rgba(255, 255, 255, .18);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity .3s, transform .3s
-}
-
-.tile.has-work:hover::after,
-.tile.has-work:focus-visible::after {
-  opacity: 1;
-  transform: none
-}
-
-@media (hover: none) {
-  .tile.has-work::after {
-    opacity: 1;
-    transform: none
-  }
-}
-
+/* ========== BRAND VIEW (opens from the brands and experience sections) ========== */
 .exp li.has-work {
   cursor: pointer
 }
@@ -1364,65 +1203,44 @@ html.lb-open {
 }
 
 
-/* ========== BRANDS I'VE WORKED WITH (logos in their real colours) ========== */
+/* ========== BRANDS I'VE WORKED WITH ========== */
 .brands {
   padding-bottom: clamp(100px, 14vw, 200px)
 }
 
-.bgrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px
+.bmask {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)
+}
+
+.btrack {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: bscroll 40s linear infinite
 }
 
 .bcell {
-  position: relative;
   display: grid;
+  flex: none;
   place-items: center;
-  height: clamp(110px, 12vw, 150px);
-  padding: 20px 24px;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  transition: border-color .3s, transform .3s, background .3s
-}
-
-/* for dark logos that would disappear on the dark tile: add  light: true  to that brand in script.js */
-.bcell.light {
-  background: #ececec
-}
-
-.bcell:hover,
-.bcell:focus-visible {
-  border-color: #3a3a3a;
-  transform: translateY(-3px)
+  width: clamp(180px, 24vw, 280px);
+  padding: 12px clamp(24px, 4vw, 48px)
 }
 
 .bcell img {
-  max-width: 80%;
-  max-height: clamp(32px, 4vw, 52px);
+  display: block;
+  max-width: clamp(80px, 12vw, 120px);
   width: auto;
-  object-fit: contain;
-  transition: transform .35s
+  height: auto;
+  filter: grayscale(1)
 }
 
-.bcell:hover img,
-.bcell:focus-visible img,
-.bcell:active img {
-  transform: scale(1.06)
-}
-
-.bname {
-  font-weight: 600;
-  font-size: clamp(16px, 1.6vw, 20px);
-  letter-spacing: -.02em;
-  color: var(--muted);
-  text-align: center
-}
-
-.bcell:hover .bname {
-  color: var(--text)
+@keyframes bscroll {
+  to {
+    transform: translateX(-50%)
+  }
 }
 
 .wv-empty {
@@ -1431,15 +1249,15 @@ html.lb-open {
   color: var(--muted)
 }
 
-@media (max-width: 900px) {
-  .bgrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr))
+@media (prefers-reduced-motion: reduce) {
+  .bmask {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-mask-image: none;
+    mask-image: none
   }
-}
 
-@media (max-width: 760px) {
-  .bgrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px
+  .btrack {
+    animation: none
   }
 }

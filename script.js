@@ -15,12 +15,12 @@ const GALLERY = [
 ];
 
 /* ===== EDIT ME: brands and their designs =====
-   Clicking a card in the slider, a logo in "Brands I've worked with", or a matching row in Experience opens that brand's page.
+   Clicking a matching row in Experience opens that brand's page.
    images = all design files for that brand, in the order they appear (files that don't exist yet are hidden).
-   covers = optional: slider images that should open this brand but aren't repeated on its page. logo = shows in the brands section. */
+   covers = optional: slider images that should open this brand but aren't repeated on its page. logo = shows in the brands carousel. */
 const BRANDS = [
   { brand: "Affordable Tyres", info: "Social media campaign design", images: ["images/AFFORDAVLE TYRES.jpg.jpeg"], logo: "images/BRANDS LOGO/AFFORDABLE.png" },
-  { brand: "Acqad", info: "Logo and brand identity", images: ["images/ACQAD.jpg.jpeg"], logo: "images/BRANDS LOGO/ACQAD.png" },
+  { brand: "Acqad", info: "Logo and brand identity", images: ["images/ACQAD.jpg.jpeg"], logo: "images/BRANDS LOGO/optimized/ACQAD.png" },
   { brand: "FlexiPay", info: "Social media campaign design", images: ["images/FLEXIPAY.jpg.jpeg"], logo: "images/BRANDS LOGO/FLEXIPAY.png" },
   {
     brand: "ANSRd Labs", info: "Brand identity, app icon and social content", covers: ["images/ANSRD LABS.jpg.jpeg", "images/ANSRD LABS 2.jpg.jpeg"],
@@ -29,7 +29,7 @@ const BRANDS = [
       ...Array.from({ length: 31 }, (_, i) => "images/ANSRd Labs/Artboard " + (i + 1) + ".jpg"),
       "images/ANSRd Labs/Layer 13.png",
       "images/ANSRd Labs/LINKEDIN OPTIMISATION.png"
-    ], logo: "images/BRANDS LOGO/ANSRD LABS .png"
+    ], logo: "images/BRANDS LOGO/optimized/ANSRD LABS .png"
   },
   { brand: "The Mint Circle", info: "Event and LinkedIn campaign flyers", images: ["images/GRACE ABDUL.jpg.jpeg"] },
   { brand: "Haves Agrofood and Fisheries", info: "Logo design", images: ["images/HAVES AGROFOOD.jpg.jpeg"], logo: "images/BRANDS LOGO/HAVESAGRO FOOD.png" },
@@ -44,16 +44,18 @@ BRANDS.forEach(b => { b.slug = b.brand.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   GALLERY.forEach((src, i) => {
     const t = document.createElement('div'); t.className = 'tile s' + (i % 3);
     const b = BRANDS.find(x => x.images.includes(src) || (x.covers || []).includes(src));
-    t.innerHTML = '<img src="' + abs(src) + '" alt="' + (b ? b.brand + ' design' : '') + '" loading="lazy">';
+    const img = document.createElement('img');
+    img.src = abs(src);
+    img.alt = b ? b.brand + ' design' : 'Selected design work';
+    img.loading = 'lazy';
+    t.append(img);
     t.querySelector('img').onerror = function () { this.remove() };
-    if (b) {
-      t.classList.add('has-work'); t.dataset.label = 'View designs';
-      t.tabIndex = 0; t.setAttribute('role', 'button'); t.setAttribute('aria-label', 'View ' + b.brand + ' designs');
-      const go = () => window.openWork && window.openWork(src);
-      t.addEventListener('click', go);
-      t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-    }
     g.append(t);
+  });
+  [...g.children].forEach(tile => {
+    const clone = tile.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    g.append(clone);
   });
 })();
 /* Scroll reveal */
@@ -124,42 +126,6 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
 })();
 
-/* Gallery
-   Desktop: pinned horizontal scroll. The page holds here while the cards slide past; it moves on once the last card has been seen.
-   Phones: no pinning. A normal swipeable row with arrow buttons at the sides. */
-(function () {
-  const gal = document.querySelector('.gallery'), track = document.getElementById('gtrack');
-  if (!gal || !track) return;
-
-  /* side arrows (visible on phones only, via CSS) */
-  const prev = document.querySelector('.gprev'), next = document.querySelector('.gnext');
-  if (prev && next) {
-    const step = () => { const t = gal.querySelector('.tile'); return t ? t.getBoundingClientRect().width + 16 : gal.clientWidth * .8; };
-    const update = () => { prev.disabled = gal.scrollLeft <= 4; next.disabled = gal.scrollLeft >= gal.scrollWidth - gal.clientWidth - 4; };
-    prev.addEventListener('click', () => gal.scrollBy({ left: -step(), behavior: 'smooth' }));
-    next.addEventListener('click', () => gal.scrollBy({ left: step(), behavior: 'smooth' }));
-    gal.addEventListener('scroll', update, { passive: true });
-    addEventListener('resize', update);
-    update();
-  }
-
-  if (!window.gsap || !window.ScrollTrigger) { gal.classList.add('no-gsap'); return; }
-  gsap.registerPlugin(ScrollTrigger);
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { gal.classList.add('no-gsap'); return; }
-  const dist = () => Math.max(0, track.scrollWidth - document.documentElement.clientWidth);
-  gsap.matchMedia().add('(min-width: 761px)', () => {
-    gsap.to(track, {
-      x: () => -dist(),
-      ease: 'none',
-      scrollTrigger: { trigger: gal, start: 'center center', end: () => '+=' + dist(), pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true }
-    });
-    gsap.from('.tile', {
-      y: 60, opacity: 0, duration: 1, stagger: .08, ease: 'power3.out',
-      scrollTrigger: { trigger: gal, start: 'top 85%', once: true }
-    });
-  });
-  addEventListener('load', () => ScrollTrigger.refresh());
-})();
 /* Brand view: thumbnails of every design for a brand, each opens large in a viewer with next / previous */
 (function () {
   const wv = document.getElementById('wv'), grid = document.getElementById('wv-grid');
@@ -256,20 +222,23 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   });
 })();
 
-/* Brands I've worked with: logos in their real colours. Each links to that brand's page (/brands/<name>) */
+/* Brands I've worked with: monochrome logo carousel */
 (function () {
-  const g = document.getElementById('bgrid'); if (!g) return;
+  const g = document.getElementById('brand-track'); if (!g) return;
   BRANDS.filter(b => b.logo).forEach(b => {
-    const a = document.createElement('a'); a.className = 'bcell' + (b.light ? ' light' : '');
-    a.href = 'brands/' + b.slug; a.setAttribute('aria-label', b.brand + ': view designs');
-    const img = new Image(); img.alt = b.brand; img.loading = 'lazy'; img.decoding = 'async';
-    img.onerror = () => { const s = document.createElement('span'); s.className = 'bname'; s.textContent = b.brand; img.replaceWith(s); };
+    const item = document.createElement('div'); item.className = 'bcell';
+    const img = new Image(); img.alt = b.brand; img.loading = 'lazy'; img.decoding = 'async'; img.fetchPriority = 'low';
+    img.onerror = () => { console.warn('Brand logo not found (404). The browser looked for:', abs(b.logo)); item.remove(); };
     img.src = abs(b.logo);
-    a.append(img);
-    a.addEventListener('click', e => {
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      e.preventDefault(); window.openWork(b.brand);
-    });
-    g.append(a);
+    item.append(img);
+    g.append(item);
+  });
+  [...g.children].forEach(item => {
+    const clone = item.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    const img = clone.querySelector('img');
+    img.alt = '';
+    img.onerror = () => { console.warn('Brand logo not found (404). The browser looked for:', img.src); clone.remove(); };
+    g.append(clone);
   });
 })();
