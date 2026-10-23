@@ -693,7 +693,7 @@ ul.tags {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--red);
+  background: blue;
   color: #fff;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
   opacity: 0;
@@ -721,7 +721,7 @@ ul.tags {
   height: 58px;
   padding: 0 16px;
   border-radius: 99px;
-  background: var(--red);
+  background: green;
   color: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
   opacity: 0;
@@ -731,7 +731,7 @@ ul.tags {
 }
 
 .wa:hover {
-  background: var(--red-hover)
+  background:green;
 }
 
 .cal:focus-visible,
