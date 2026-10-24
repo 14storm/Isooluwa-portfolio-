@@ -33,7 +33,17 @@ const BRANDS = [
   },
   { brand: "The Mint Circle", info: "Event and LinkedIn campaign flyers", images: ["images/GRACE ABDUL.jpg.jpeg"] },
   { brand: "Haves Agrofood and Fisheries", info: "Logo design", images: ["images/HAVES AGROFOOD.jpg.jpeg"], logo: "images/BRANDS LOGO/HAVESAGRO FOOD.png" },
-  { brand: "Saint Hive International", info: "Logo design", images: ["images/SHI.jpg.jpeg"], logo: "images/BRANDS LOGO/SAINT HIVE.png" },
+  {
+    brand: "Saint Hive International", info: "Logo design", images: [
+      "images/SHI.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 2.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 4.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 6.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 8.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 9.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 10.jpg.jpeg"
+    ], logo: "images/BRANDS LOGO/SAINT HIVE.png"
+  },
   { brand: "Dattego", info: "Brand design", images: [], logo: "images/BRANDS LOGO/DATTEGO.png" },
   { brand: "Seed of Mercy Foundation", info: "Brand design", images: [], logo: "images/BRANDS LOGO/SEED OF MERCY FOUNDATION.png" }
 ];
@@ -61,7 +71,15 @@ const PROJECTS = [
     cover: "images/SHI.jpg.jpeg",
     overview: "Selected identity artwork for Saint Hive International.",
     approach: "The supplied design pairs the organisation’s name with a community-focused symbol in a restrained monochrome treatment.",
-    images: ["images/SHI.jpg.jpeg"]
+    images: [
+      "images/SHI.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 2.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 4.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 6.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 8.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 9.jpg.jpeg",
+      "images/saint-hive-foundation/Artboard 10.jpg.jpeg"
+    ]
   },
   {
     slug: "ansrd-labs",
@@ -72,9 +90,17 @@ const PROJECTS = [
     approach: "The presentation moves from the brand introduction into typography and visual applications, using a focused amber, black and white palette.",
     images: [
       "images/ANSRd Labs/Artboard 1.jpg",
+      "images/ANSRd Labs/Artboard 2.jpg",
+      "images/ANSRd Labs/Artboard 3.jpg",
+      "images/ANSRd Labs/Artboard 4.jpg",
+      "images/ANSRd Labs/Artboard 5.jpg",
+      "images/ANSRd Labs/Artboard 6.jpg",
+      "images/ANSRd Labs/Artboard 9.jpg",
+      "images/ANSRd Labs/Artboard 8.jpg",
+      "images/ANSRd Labs/Artboard 7.jpg",
+      "images/ANSRd Labs/Artboard 10.jpg",
       "images/ANSRd Labs/Artboard 11.jpg",
-      "images/ANSRd Labs/Artboard 17.jpg",
-      "images/ANSRd Labs/Artboard 21.jpg"
+      "images/ANSRd Labs/Artboard 12.jpg"
     ],
     more: "https://www.behance.net/gallery/239895105/BRAND-IDENTITY-DESIGN-FOR-ANSRD-LABS"
   },
@@ -271,53 +297,20 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   if (!wv || !grid || !lb) return;
   const title = document.getElementById('wv-title'), info = document.getElementById('wv-info');
   const story = document.getElementById('wv-story'), cta = document.getElementById('wv-cta');
+  const designControls = document.getElementById('wv-controls');
+  const designPosition = document.getElementById('wv-position');
   const lbImg = lb.querySelector('img'), root = document.documentElement;
-  let opener = null, set = [], idx = 0;
+  let opener = null, set = [], idx = 0, activeDesign = 0, isCase = false;
 
-  /* project page (desktop): scrolling moves the flyers sideways, each one drifting, tilting and scaling as it passes */
-  const inner = document.getElementById('wv-inner'), view = document.getElementById('wv-view');
-  const pinMQ = matchMedia('(min-width: 901px) and (prefers-reduced-motion: no-preference)');
-  let travel = 0, cur = 0, target = 0, raf = 0, introStart = 0, pinned = false;
-  const clamp01 = v => Math.max(0, Math.min(1, v));
-  const easeOut = v => 1 - Math.pow(1 - v, 3);
-  const flyers = () => [...grid.querySelectorAll('.wv-thumb:not([hidden])')];
-  const resetFlyers = () => {
-    grid.style.transform = '';
-    grid.querySelectorAll('.wv-thumb').forEach(t => { t.style.transform = ''; t.style.opacity = ''; });
+  const loadedDesigns = () => [...grid.querySelectorAll('.wv-thumb[data-loaded="true"]')];
+  const showDesign = i => {
+    const designs = loadedDesigns();
+    if (!isCase || !designs.length) return;
+    activeDesign = (i + designs.length) % designs.length;
+    designs.forEach((design, index) => { design.hidden = index !== activeDesign; });
+    designPosition.textContent = (activeDesign + 1) + ' / ' + designs.length;
+    designControls.hidden = designs.length < 2;
   };
-  const paint = now => {
-    raf = 0;
-    cur += (target - cur) * 0.12;
-    grid.style.transform = 'translate3d(' + cur + 'px,0,0)';
-    const vw = view.clientWidth || 1, intro = clamp01((now - introStart) / 1200);
-    flyers().forEach((t, i) => {
-      const li = easeOut(clamp01(intro * 1.6 - i * 0.14));                       /* staggered entrance */
-      const d = (t.offsetLeft + t.offsetWidth / 2 + cur - vw / 2) / vw;          /* 0 = centred in the right column */
-      const ad = Math.min(Math.abs(d), 1.2);
-      const y = Math.sin(d * Math.PI) * -22 + (i % 2 ? 16 : -16);
-      t.style.transform = 'translate3d(' + ((1 - li) * 100) + 'px,' + y + 'px,0) rotate(' + (d * 3) + 'deg) scale(' + (1 - ad * 0.08) + ')';
-      t.style.opacity = li * (1 - Math.min(ad, 1) * 0.4);
-    });
-    if (intro < 1 || Math.abs(target - cur) > 0.2) raf = requestAnimationFrame(paint);
-  };
-  const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
-  const onScroll = () => {
-    if (!pinned) return;
-    const max = wv.scrollHeight - wv.clientHeight;
-    target = -travel * (max > 0 ? clamp01(wv.scrollTop / max) : 0);
-    kick();
-  };
-  const sync = () => {
-    pinned = wv.classList.contains('wv--case') && pinMQ.matches;
-    if (!pinned) { inner.style.removeProperty('--travel'); resetFlyers(); target = cur = 0; return; }
-    travel = Math.max(0, grid.scrollWidth - view.clientWidth);
-    inner.style.setProperty('--travel', travel + 'px');
-    onScroll();
-    kick();
-  };
-  wv.addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', sync);
-  if (pinMQ.addEventListener) pinMQ.addEventListener('change', sync);
 
   const showLB = i => { idx = (i + set.length) % set.length; lbImg.src = set[idx]; };
   const openLB = (thumbs, btn) => {
@@ -373,20 +366,25 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     }
     cta.hidden = !more;
     if (more) cta.href = more;
-    resetFlyers();
     grid.innerHTML = '';
-    wv.classList.toggle('wv--case', route === 'projects');
-    cur = target = 0; introStart = performance.now();
+    isCase = route === 'projects';
+    activeDesign = 0;
+    designControls.hidden = true;
+    wv.classList.toggle('wv--case', isCase);
     images.forEach((src, i) => {
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wv-thumb'; btn.hidden = true;
       btn.setAttribute('aria-label', 'View ' + titleText + ' design ' + (i + 1));
-      btn.style.animationDelay = (i * 70) + 'ms';
+      btn.dataset.index = String(i);
       const img = new Image(); img.alt = titleText + ' design'; img.decoding = 'async';
-      img.onload = () => { btn.hidden = false; sync(); };
+      img.onload = () => {
+        btn.dataset.loaded = 'true';
+        btn.hidden = false;
+        if (isCase) showDesign(activeDesign);
+      };
       img.onerror = () => { console.warn('Design not found (404). The browser looked for:', abs(src)); btn.remove(); };
       img.src = abs(src);
       btn.append(img);
-      btn.addEventListener('click', () => openLB([...grid.querySelectorAll('.wv-thumb')], btn));
+      btn.addEventListener('click', () => openLB(loadedDesigns(), btn));
       grid.append(btn);
     });
     if (!images.length) {
@@ -396,7 +394,6 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
       grid.append(empty);
     }
     wv.scrollTop = 0;
-    requestAnimationFrame(sync);
     wv.classList.add('open'); wv.setAttribute('aria-hidden', 'false'); root.classList.add('wv-open');
     wv.querySelector('.wv-close').focus({ preventScroll: true });
     document.title = titleText + ' \u2014 ' + siteTitle;
@@ -436,6 +433,8 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   };
 
   wv.querySelector('.wv-close').addEventListener('click', closeWV);
+  designControls.querySelector('.wv-prev').addEventListener('click', () => showDesign(activeDesign - 1));
+  designControls.querySelector('.wv-next').addEventListener('click', () => showDesign(activeDesign + 1));
   lb.querySelector('.lb-close').addEventListener('click', closeLB);
   lb.querySelector('.lb-prev').addEventListener('click', () => showLB(idx - 1));
   lb.querySelector('.lb-next').addEventListener('click', () => showLB(idx + 1));
