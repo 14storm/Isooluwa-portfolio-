@@ -57,6 +57,8 @@ const PROJECTS = [
     overview: "A social campaign series for Affordable Tyres, built to make tyre education and promotions easy to scan.",
     approach: "The designs pair bold display type, high-contrast yellow, black and red, and tyre imagery with concise messages and clear next steps.",
     images: [
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/They should be part of your safety plan.jpg",
+      "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/ch...e.jpg",
       "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/Artboard 16.png",
       "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/RUN FLAT.jpg",
       "images/AFFORDABLE-20261022T200906Z-1-001/AFFORDABLE/sept.jpg",
