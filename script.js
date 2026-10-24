@@ -274,6 +274,51 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
   const lbImg = lb.querySelector('img'), root = document.documentElement;
   let opener = null, set = [], idx = 0;
 
+  /* project page (desktop): scrolling moves the flyers sideways, each one drifting, tilting and scaling as it passes */
+  const inner = document.getElementById('wv-inner'), view = document.getElementById('wv-view');
+  const pinMQ = matchMedia('(min-width: 901px) and (prefers-reduced-motion: no-preference)');
+  let travel = 0, cur = 0, target = 0, raf = 0, introStart = 0, pinned = false;
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const easeOut = v => 1 - Math.pow(1 - v, 3);
+  const flyers = () => [...grid.querySelectorAll('.wv-thumb:not([hidden])')];
+  const resetFlyers = () => {
+    grid.style.transform = '';
+    grid.querySelectorAll('.wv-thumb').forEach(t => { t.style.transform = ''; t.style.opacity = ''; });
+  };
+  const paint = now => {
+    raf = 0;
+    cur += (target - cur) * 0.12;
+    grid.style.transform = 'translate3d(' + cur + 'px,0,0)';
+    const vw = view.clientWidth || 1, intro = clamp01((now - introStart) / 1200);
+    flyers().forEach((t, i) => {
+      const li = easeOut(clamp01(intro * 1.6 - i * 0.14));                       /* staggered entrance */
+      const d = (t.offsetLeft + t.offsetWidth / 2 + cur - vw / 2) / vw;          /* 0 = centred in the right column */
+      const ad = Math.min(Math.abs(d), 1.2);
+      const y = Math.sin(d * Math.PI) * -22 + (i % 2 ? 16 : -16);
+      t.style.transform = 'translate3d(' + ((1 - li) * 100) + 'px,' + y + 'px,0) rotate(' + (d * 3) + 'deg) scale(' + (1 - ad * 0.08) + ')';
+      t.style.opacity = li * (1 - Math.min(ad, 1) * 0.4);
+    });
+    if (intro < 1 || Math.abs(target - cur) > 0.2) raf = requestAnimationFrame(paint);
+  };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+  const onScroll = () => {
+    if (!pinned) return;
+    const max = wv.scrollHeight - wv.clientHeight;
+    target = -travel * (max > 0 ? clamp01(wv.scrollTop / max) : 0);
+    kick();
+  };
+  const sync = () => {
+    pinned = wv.classList.contains('wv--case') && pinMQ.matches;
+    if (!pinned) { inner.style.removeProperty('--travel'); resetFlyers(); target = cur = 0; return; }
+    travel = Math.max(0, grid.scrollWidth - view.clientWidth);
+    inner.style.setProperty('--travel', travel + 'px');
+    onScroll();
+    kick();
+  };
+  wv.addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', sync);
+  if (pinMQ.addEventListener) pinMQ.addEventListener('change', sync);
+
   const showLB = i => { idx = (i + set.length) % set.length; lbImg.src = set[idx]; };
   const openLB = (thumbs, btn) => {
     set = thumbs.map(t => t.querySelector('img').src);
@@ -328,13 +373,16 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     }
     cta.hidden = !more;
     if (more) cta.href = more;
+    resetFlyers();
     grid.innerHTML = '';
+    wv.classList.toggle('wv--case', route === 'projects');
+    cur = target = 0; introStart = performance.now();
     images.forEach((src, i) => {
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wv-thumb'; btn.hidden = true;
       btn.setAttribute('aria-label', 'View ' + titleText + ' design ' + (i + 1));
       btn.style.animationDelay = (i * 70) + 'ms';
-      const img = new Image(); img.alt = titleText + ' design'; img.decoding = 'async'; img.loading = 'lazy';
-      img.onload = () => { btn.hidden = false; };
+      const img = new Image(); img.alt = titleText + ' design'; img.decoding = 'async';
+      img.onload = () => { btn.hidden = false; sync(); };
       img.onerror = () => { console.warn('Design not found (404). The browser looked for:', abs(src)); btn.remove(); };
       img.src = abs(src);
       btn.append(img);
@@ -348,6 +396,7 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
       grid.append(empty);
     }
     wv.scrollTop = 0;
+    requestAnimationFrame(sync);
     wv.classList.add('open'); wv.setAttribute('aria-hidden', 'false'); root.classList.add('wv-open');
     wv.querySelector('.wv-close').focus({ preventScroll: true });
     document.title = titleText + ' \u2014 ' + siteTitle;
@@ -434,4 +483,181 @@ document.querySelectorAll('.fill .track').forEach(t => t.innerHTML = track.inner
     img.onerror = () => { console.warn('Brand logo not found (404). The browser looked for:', img.src); clone.remove(); };
     g.append(clone);
   });
+})();
+/* ===== Footer name: oil-on-water effect (WebGL) =====
+   The outlined name keeps scrolling. On hover, a canvas over it paints oil-slick colours inside the letters and along
+   their edges, and the colours swirl around the cursor. If WebGL (or a needed canvas feature) isn't available,
+   or the visitor prefers reduced motion / has no mouse, the red glass effect above stays as the fallback. */
+(function () {
+  const m = document.querySelector('.marquee'), track = document.getElementById('track');
+  if (!m || !track) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const mask = document.createElement('canvas'), mctx = mask.getContext('2d');
+  if (!mctx || !('letterSpacing' in mctx)) return;
+  const cv = document.createElement('canvas');
+  const gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+  if (!gl) return;
+
+  const VS = 'attribute vec2 p; varying vec2 vUv; void main(){ vUv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }';
+  const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 vUv;
+uniform sampler2D uMask;   /* the letters, white on black */
+uniform vec2 uRes;
+uniform vec2 uMouse;       /* 0..1 inside the footer name */
+uniform float uTime;
+
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float fbm(vec2 p){
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + vec2(17.0, 9.0); a *= 0.5; }
+  return v;
+}
+/* oil-slick colours: orange, red, blue, teal, back around */
+vec3 film(float t){
+  float x = fract(t) * 4.0;
+  vec3 c0 = vec3(0.85, 0.45, 0.15), c1 = vec3(0.78, 0.12, 0.14), c2 = vec3(0.12, 0.22, 0.85), c3 = vec3(0.05, 0.62, 0.68);
+  vec3 c = mix(c0, c1, smoothstep(0.0, 1.0, x));
+  c = mix(c, c2, smoothstep(1.0, 2.0, x));
+  c = mix(c, c3, smoothstep(2.0, 3.0, x));
+  return mix(c, c0, smoothstep(3.0, 4.0, x));
+}
+
+float edgeAt(vec2 uv, vec2 px){
+  float gx = texture2D(uMask, uv + vec2(px.x * 1.5, 0.0)).r - texture2D(uMask, uv - vec2(px.x * 1.5, 0.0)).r;
+  float gy = texture2D(uMask, uv + vec2(0.0, px.y * 1.5)).r - texture2D(uMask, uv - vec2(0.0, px.y * 1.5)).r;
+  return length(vec2(gx, gy));
+}
+
+void main(){
+  vec2 px = 1.0 / uRes;
+  float m = texture2D(uMask, vUv).r;
+
+  vec2 asp = vec2(uRes.x / uRes.y, 1.0);
+  vec2 p = vUv * asp, mp = uMouse * asp;
+  vec2 d = p - mp;
+  float r = length(d);
+
+  /* the cursor stirs the film */
+  float ang = 2.6 * exp(-r * r * 7.0) * sin(uTime * 0.7);
+  d = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * d;
+  vec2 q = mp + d;
+
+  vec2 flow = vec2(uTime * 0.045, -uTime * 0.035);
+  float n1 = fbm(q * 1.6 + flow);
+  float n2 = fbm(q * 2.4 - flow * 1.4 + n1 * 2.2);      /* warped noise = oily, flowing patches */
+  float thick = n2 * 1.7 + n1 * 0.7 + uTime * 0.025 + 0.9 * exp(-r * r * 4.0);
+  vec3 oil = film(thick);
+
+  float near = exp(-r * r * 2.2);                        /* a little brighter around the cursor */
+  vec3 body = oil * (0.14 + 0.34 * near) * (0.55 + 0.9 * n2);
+
+  /* each colour channel finds the edge in a slightly different place = rainbow fringe on the outline */
+  float s = 1.5;
+  vec3 e = vec3(edgeAt(vUv + vec2(-s * px.x, 0.0), px),
+                edgeAt(vUv + vec2(0.0, 0.6 * s * px.y), px),
+                edgeAt(vUv + vec2( s * px.x, 0.0), px));
+  float ea = (e.r + e.g + e.b) / 3.0;
+  vec3 rim = max(vec3(0.42) * ea + (e - vec3(ea)) * 0.8 + oil * 0.22 * ea, 0.0);   /* mostly a soft grey line, with a colour fringe */
+
+  float alpha = clamp(max(m * 0.97, max(e.r, max(e.g, e.b)) * 1.2), 0.0, 1.0);
+  vec3 col = min(body * m + rim, vec3(alpha));
+  gl_FragColor = vec4(col, alpha);                       /* premultiplied */
+}`;
+
+  const compile = (type, src) => {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('Oil effect shader:', gl.getShaderInfoLog(s)); return null; }
+    return s;
+  };
+  const vs = compile(gl.VERTEX_SHADER, VS), fsh = compile(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fsh) return;
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fsh); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn('Oil effect link:', gl.getProgramInfoLog(prog)); return; }
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  const uRes = gl.getUniformLocation(prog, 'uRes'), uMouse = gl.getUniformLocation(prog, 'uMouse'), uTime = gl.getUniformLocation(prog, 'uTime');
+  gl.uniform1i(gl.getUniformLocation(prog, 'uMask'), 0);
+  gl.clearColor(0, 0, 0, 0);
+
+  cv.className = 'oil'; cv.setAttribute('aria-hidden', 'true');
+  m.append(cv); m.classList.add('gl-on');           /* from here on the canvas replaces the red glass */
+
+  let W = 0, H = 0, dpr = 1, fs = 100, asc = 97, desc = 24;
+  const setup = () => {
+    const r = m.getBoundingClientRect(); if (!r.width || !r.height) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(2, Math.round(r.width * dpr)); H = Math.max(2, Math.round(r.height * dpr));
+    mask.width = cv.width = W; mask.height = cv.height = H;
+    gl.viewport(0, 0, W, H);
+    const cs = getComputedStyle(track.firstElementChild);
+    fs = parseFloat(cs.fontSize);
+    mctx.font = cs.fontWeight + ' ' + (fs * dpr) + 'px ' + cs.fontFamily;
+    mctx.letterSpacing = (parseFloat(cs.letterSpacing) || 0) * dpr + 'px';
+    mctx.textBaseline = 'alphabetic';
+    const tm = mctx.measureText('Hg');
+    asc = tm.fontBoundingBoxAscent !== undefined ? tm.fontBoundingBoxAscent / dpr : fs * 0.97;
+    desc = tm.fontBoundingBoxDescent !== undefined ? tm.fontBoundingBoxDescent / dpr : fs * 0.24;
+  };
+
+  /* draw the scrolling name into the mask exactly where the page's own text currently is */
+  const drawMask = () => {
+    const mr = m.getBoundingClientRect();
+    mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H);
+    mctx.fillStyle = '#fff';
+    for (const sp of track.children) {
+      const r = sp.getBoundingClientRect();
+      if (r.right < mr.left || r.left > mr.right) continue;
+      const base = (r.top - mr.top) + (fs - (asc + desc)) / 2 + asc;   /* line-height: 1 */
+      mctx.fillText(sp.textContent, (r.left - mr.left) * dpr, base * dpr);
+    }
+  };
+
+  let raf = 0, hover = false, lastHover = 0, mx = .5, my = .5, tx = .5, ty = .5;
+  const t0 = performance.now();
+  const setMouse = e => { const r = m.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width; ty = 1 - (e.clientY - r.top) / r.height; };
+  const frame = now => {
+    raf = 0;
+    mx += (tx - mx) * .12; my += (ty - my) * .12;
+    if (W) {
+      drawMask();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mask);
+      gl.uniform2f(uRes, W, H); gl.uniform2f(uMouse, mx, my); gl.uniform1f(uTime, (now - t0) / 1000);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    if (hover || now - lastHover < 700) raf = requestAnimationFrame(frame);   /* keep drawing while it fades out */
+  };
+  const start = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+  m.addEventListener('pointerenter', e => { if (!W) setup(); hover = true; lastHover = performance.now(); setMouse(e); mx = tx; my = ty; start(); });
+  m.addEventListener('pointermove', e => { lastHover = performance.now(); setMouse(e); });
+  m.addEventListener('pointerleave', () => { hover = false; lastHover = performance.now(); start(); });
+  if ('ResizeObserver' in window) new ResizeObserver(setup).observe(m); else addEventListener('resize', setup);
+  setup();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
 })();
